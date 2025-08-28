@@ -1,0 +1,23 @@
+name: PNG to MP4
+
+on:
+  workflow_dispatch:  # allows manual or API trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Generate MP4 from PNG
+        run: ffmpeg -loop 1 -i input.png -c:v libx264 -t 5 -pix_fmt yuv420p output.mp4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated-mp4
+          path: output.mp4
