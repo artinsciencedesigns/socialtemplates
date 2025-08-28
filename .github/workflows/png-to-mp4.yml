@@ -1,7 +1,7 @@
 name: PNG to MP4
 
 on:
-  workflow_dispatch:  # allows manual or API trigger
+  workflow_dispatch:   # allows manual/API trigger
 
 jobs:
   build:
@@ -16,8 +16,14 @@ jobs:
       - name: Generate MP4 from PNG
         run: ffmpeg -loop 1 -i input.png -c:v libx264 -t 5 -pix_fmt yuv420p output.mp4
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: generated-mp4
-          path: output.mp4
+      - name: Commit MP4 back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p exports
+          mv output.mp4 exports/output.mp4
+          git add exports/output.mp4
+          git commit -m "Add generated output.mp4"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
