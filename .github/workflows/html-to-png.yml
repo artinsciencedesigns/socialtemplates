@@ -1,0 +1,42 @@
+name: Convert HTML to PNG
+
+on:
+  workflow_dispatch: # allows you to trigger manually from GitHub UI
+  push:
+    paths:
+      - "input.html"   # run when input.html changes
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Puppeteer
+        run: npm install puppeteer
+
+      - name: Convert HTML to PNG
+        run: |
+          node -e "
+          const puppeteer = require('puppeteer');
+          (async () => {
+            const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+            const page = await browser.newPage();
+            await page.goto('file://' + process.cwd() + '/input.html');
+            await page.screenshot({ path: 'output.png', fullPage: true });
+            await browser.close();
+          })();
+          "
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: html-to-png
+          path: output.png
