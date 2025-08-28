@@ -1,7 +1,12 @@
 name: PNG to MP4
 
 on:
-  workflow_dispatch:   # allows manual/API trigger
+  workflow_dispatch:
+    inputs:
+      image_url:
+        description: "Source PNG URL"
+        required: true
+        type: string
 
 jobs:
   build:
@@ -11,19 +16,24 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg wget
 
-      - name: Generate MP4 from PNG
+      - name: Download PNG
+        run: wget -O input.png "${{ github.event.inputs.image_url }}"
+
+      - name: Generate MP4
         run: ffmpeg -loop 1 -i input.png -c:v libx264 -t 5 -pix_fmt yuv420p output.mp4
 
-      - name: Commit MP4 back to repo
+      # Save to repo (so it has a public raw URL)
+      - name: Move output to public folder
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p exports
-          mv output.mp4 exports/output.mp4
-          git add exports/output.mp4
-          git commit -m "Add generated output.mp4"
+          mkdir -p public
+          mv output.mp4 public/
+      
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add public/output.mp4
+          git commit -m "Add new mp4"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
